@@ -17,3 +17,14 @@ HLE_FORCE("_ZN2nn2vi11CreateLayerEPPNS0_5LayerEPNS0_7DisplayE", "建图层；宿
 HLE_FORCE("_ZN2nn2vi15GetNativeWindowEPPvPNS0_5LayerE", "原生窗口句柄，交给 NVN 窗口 builder；宿主给静态对象", Result, h_vi_GetNative, void **out, void *layer) {
     (void)layer; *out = &g_native; return RES_OK;
 }
+
+void hle_signal_system_event(void *ev);   // hle_thread.c：客体 SystemEvent 触发（须在客体线程上）
+
+// ACNH 用它等 vsync 推进帧；宿主没有真帧循环，取用时立即触发一次。
+// ACNH uses it to wait for vsync to advance frames; the host has no real frame loop, so signal once on retrieval.
+HLE_FORCE("_ZN2nn2vi20GetDisplayVsyncEventEPNS_2os15SystemEventTypeEPNS0_7DisplayE",
+          "显示 vsync 事件；宿主立即触发一次", Result, h_vi_GetVsync, void *ev, void *disp) {
+    (void)disp;
+    if (ev) hle_signal_system_event(ev);
+    return RES_OK;
+}
