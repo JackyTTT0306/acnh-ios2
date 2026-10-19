@@ -18,7 +18,25 @@ static void *hle_watch_memset(void *d, int c, size_t n) {
     return memset(d, c, n);
 }
 __attribute__((used, section("__DATA,swhle"))) static const hle_ent hle_lib_memset = { "memset", (void *)hle_watch_memset };
-L(memcpy) L(memmove) L(memcmp) L(memchr) L(strlen) L(strnlen) L(strcmp) L(strncmp)
+static void *hle_watch_memcpy(void *d, const void *s, size_t n) {
+    uintptr_t a = (uintptr_t)d;
+    if (g_watch_hi && a <= g_watch_hi && a + n >= g_watch_lo) {
+        uint64_t lr; __asm__ volatile("mov %0, x30" : "=r"(lr));
+        LOG("watch: memcpy(%p, %p, %zu) host-lr=%#llx", d, s, n, (unsigned long long)lr);
+    }
+    return memcpy(d, s, n);
+}
+__attribute__((used, section("__DATA,swhle"))) static const hle_ent hle_lib_memcpy = { "memcpy", (void *)hle_watch_memcpy };
+static void *hle_watch_memmove(void *d, const void *s, size_t n) {
+    uintptr_t a = (uintptr_t)d;
+    if (g_watch_hi && a <= g_watch_hi && a + n >= g_watch_lo) {
+        uint64_t lr; __asm__ volatile("mov %0, x30" : "=r"(lr));
+        LOG("watch: memmove(%p, %p, %zu) host-lr=%#llx", d, s, n, (unsigned long long)lr);
+    }
+    return memmove(d, s, n);
+}
+__attribute__((used, section("__DATA,swhle"))) static const hle_ent hle_lib_memmove = { "memmove", (void *)hle_watch_memmove };
+L(memcmp) L(memchr) L(strlen) L(strnlen) L(strcmp) L(strncmp)
 L(strcpy) L(strncpy) L(strcat) L(strncat) L(strchr) L(strrchr) L(strstr) L(strspn) L(strcspn)
 L(strpbrk) L(strcasecmp) L(strncasecmp) L(atoi) L(atof) L(strtol) L(strtoul) L(strtoll) L(strtoull)
 L(strtod) L(strtof) L(sqrtf) L(cbrtf) L(expf) L(acosf) L(cosf) L(sinf) L(atan2f) L(fmodf) L(cos)
