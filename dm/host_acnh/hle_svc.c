@@ -130,6 +130,7 @@ static void map_del(int i) { pthread_mutex_lock(&g_map_lock); g_map[i] = g_map[-
 int svc_thread(int num, uint64_t *regs);   // hle_thread.c：线程与同步类 | hle_thread.c: thread and synchronization kind
 
 uint64_t svc_dispatch(int num, uint64_t *regs, uint64_t orig_addr) {
+    if (g_flag.svc) LOG("svc %#x x0=%#llx x1=%#llx x2=%#llx x3=%#llx", num, regs[0], regs[1], regs[2], regs[3]);
     { void hlecount_svc(int); hlecount_svc(num); }   // DM_HLECOUNT：svc 按号计数 | DM_HLECOUNT: svc counts by number
     mem_init();
     if (svc_thread(num, regs)) return regs[0];
