@@ -34,7 +34,7 @@ jobs:
       - name: Run headless host
         run: |
           set +e
-          DM_FS=1 DM_FSLOG=$PWD/fs.log ./dm/host_acnh/dmhost_acnh rewrite main sdk subsdk0 > run.log 2>&1
+          DM_FS=1 DM_SVC=1 DM_FSLOG=$PWD/fs.log ./dm/host_acnh/dmhost_acnh rewrite main sdk subsdk0 > run.log 2>&1
           code=$?
           echo "exit=$code"
           echo "=== first 80 lines ==="
