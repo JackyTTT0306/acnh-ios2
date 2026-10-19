@@ -63,3 +63,10 @@ void *objmap_del(const void *guest) {
 // D2R language hooks used by hle_fs.c: ACNH goes through nn::oe, so return fixed values.
 int dm_sys_lang(void) { return 0; }            // 0 = 日语（D2R 的 Settings.json 用；对 ACNH 无影响）
 int dm_custom_lang_explicit(void) { return -1; } // -1 = 未设置，hle_fs 跳过语言改写
+
+// 性能计数（d2r 的 hle_count.c）与 UI 消息订阅（diag.c）：ACNH 最小集不需要，空实现。
+// Performance counters (D2R's hle_count.c) and UI message subscription (diag.c): not needed here.
+void *hlecount_wrap(const char *kind, const char *name, void *fn) { (void)kind; (void)name; return fn; }
+void hlecount_seal(void) {}
+void hlecount_svc(int num) { (void)num; }
+void uimsg_subscribe(void (*fn)(const char *, const char *, const char *)) { (void)fn; }
