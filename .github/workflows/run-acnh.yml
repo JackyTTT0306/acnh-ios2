@@ -1,0 +1,49 @@
+name: acnh-run
+
+# 私有仓库专用：下载改写产物（游戏代码，不进公开仓库）并运行 headless host。
+# Private-repo only: fetch the rewrite output (game code, never in the public repo) and run the headless host.
+on:
+  workflow_dispatch:
+    inputs:
+      data_tag:
+        description: '持有 rewrite.zip 的 Release tag'
+        default: 'data-v1'
+
+jobs:
+  run:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Toolchain
+        run: |
+          xcodebuild -version
+          sw_vers
+
+      - name: Build host
+        run: make -C dm/host_acnh -j$(sysctl -n hw.ncpu)
+
+      - name: Fetch rewrite data
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release download "${{ inputs.data_tag }}" --pattern 'rewrite.zip' --dir .
+          unzip -q rewrite.zip
+          ls -la rewrite | head -20
+
+      - name: Run headless host
+        run: |
+          set +e
+          ./dm/host_acnh/dmhost_acnh rewrite main sdk subsdk0 > run.log 2>&1
+          code=$?
+          echo "exit=$code"
+          echo "=== first 80 lines ==="
+          head -80 run.log
+          echo "=== last 40 lines ==="
+          tail -40 run.log
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: run-log
+          path: run.log
+          if-no-files-found: warn
