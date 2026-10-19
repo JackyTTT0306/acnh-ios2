@@ -18,7 +18,10 @@ SRC = \
 	hle_os.c \
 	hle_table.c \
 	hle_sdkinit.c \
+	hle_audio.c \
+	hle_account.c \
 	hle_fs.c \
+	hle_time.c \
 	hle_guestthread.c \
 	crash.c \
 	front_null.c \
