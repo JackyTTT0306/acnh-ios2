@@ -140,11 +140,13 @@ static void *force_lookup(const char *name) {
     return NULL;
 }
 static void force_check(void) {
-    int bad = 0;
+    // ACNH 引用的服务层函数与 D2R 不同：未命中的条目只警告，不中止（d2r 原版是"清单写错要响亮中止"）。
+    // ACNH references a different set of service-layer functions than D2R; unmatched entries only warn,
+    // they do not abort (d2r's original rule is "a wrong list must fail loudly").
+    int missing = 0;
     for (unsigned i = 0; i < g_nforce; i++)
-        if (!g_force_hits[i]) { LOG("强制接管条目无任何引用：%s", g_force[i].name); bad = 1; }
-    if (bad) die("强制接管清单有误");
-    LOG("force: %u 条全部命中", g_nforce);
+        if (!g_force_hits[i]) { LOG("强制接管条目无任何引用（忽略）：%s", g_force[i].name); missing++; }
+    LOG("force: %u 条，命中 %u，未命中 %u", g_nforce, g_nforce - (unsigned)missing, (unsigned)missing);
 }
 
 // 读改写器表头（段边界、槽号）；表头以外有任何行即旧版产物（装载期改代码），拒绝
