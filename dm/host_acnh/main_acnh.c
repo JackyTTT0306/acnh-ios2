@@ -61,9 +61,9 @@ static void guest_main(void) {
             if (!strcmp(g_mod[i].name, "main")) {
                 void *inst = *(void **)(g_mod[i].base + 0x32e7ad8);
                 uint64_t *p = (uint64_t *)inst;
-                LOG("diag: main+0x32e7ad8 -> %p [0]=%#llx [8]=%#llx [10]=%#llx [18]=%#llx（进 nnMain 前）",
-                    inst, p ? (unsigned long long)p[0] : 0, p ? (unsigned long long)p[1] : 0,
-                    p ? (unsigned long long)p[2] : 0, p ? (unsigned long long)p[3] : 0);
+                LOG("diag: base=%p inst=%p (inst-base=%#llx) [0]=%#llx [8]=%#llx（进 nnMain 前）",
+                    g_mod[i].base, inst, (unsigned long long)((uintptr_t)inst - (uintptr_t)g_mod[i].base),
+                    p ? (unsigned long long)p[0] : 0, p ? (unsigned long long)p[1] : 0);
             }
     }
     LOG(">>> nnMain");
