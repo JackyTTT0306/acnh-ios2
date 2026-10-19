@@ -15,6 +15,7 @@ void guest_thread_init(void);
 uint32_t svc_thread_main_init(void);
 void crash_install(void);
 void dm_fault_hook_register(int (*fn)(void *addr, int is_write, void *uc));
+extern uintptr_t g_watch_lo, g_watch_hi;   // hle_table.c：memset 监视范围
 
 // 诊断：监视 main+0x32e7ad8 所在页的写入，记录写入者 PC（该全局指针指向一个未构造的 BSS 对象）。
 // Diagnostic: watch writes to the page holding main+0x32e7ad8 and record the writer's PC (that global
@@ -81,10 +82,8 @@ static void guest_main(void) {
                 LOG("diag: base=%p inst=%p (inst-base=%#llx) [0]=%#llx [8]=%#llx（进 nnMain 前）",
                     g_mod[i].base, inst, (unsigned long long)((uintptr_t)inst - (uintptr_t)g_mod[i].base),
                     p ? (unsigned long long)p[0] : 0, p ? (unsigned long long)p[1] : 0);
-                g_watch_addr = (uintptr_t)(g_mod[i].base + 0x32e7ad8);
-                dm_fault_hook_register(watch_fault);
-                if (mprotect((void *)(g_watch_addr & ~(uintptr_t)0xfff), 0x1000, PROT_READ))
-                    LOG("watch: mprotect 失败（%d）", errno);
+                g_watch_lo = (uintptr_t)(g_mod[i].base + 0x32e7ad8);
+                g_watch_hi = g_watch_lo + 8;
             }
     }
     LOG(">>> nnMain");
