@@ -54,6 +54,13 @@ static void guest_main(void) {
     dm_prof_mark("init_array");
     ((fnp)req("_ZN2nn2os11SetHostArgcEi"))((void *)(uint64_t)g_argc);
     ((fnp)req("_ZN2nn2os11SetHostArgvEPPc"))(g_argv);
+    {   // 诊断：全局单例槽（ACNH 的 GameSystem 之类）。nnMain 早期虚调用读它，为空即崩在 main+0x19a6250。
+        // Diagnostic: the global singleton slot (ACNH's GameSystem and the like). An early virtual call in
+        // nnMain reads it; when it is null the guest crashes at main+0x19a6250.
+        for (int i = 0; i < g_nmod; i++)
+            if (!strcmp(g_mod[i].name, "main"))
+                LOG("diag: main+0x32e7ad8 -> %p（进 nnMain 前）", *(void **)(g_mod[i].base + 0x32e7ad8));
+    }
     LOG(">>> nnMain");
     ((fn0)req("nnMain"))();
     LOG("nnMain returned");
