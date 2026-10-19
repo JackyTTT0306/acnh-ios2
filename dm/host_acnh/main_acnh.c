@@ -33,6 +33,15 @@ typedef void (*fn0)(void);
 typedef void (*fn2)(uint64_t, uint64_t);
 typedef void (*fnp)(void *);
 
+// 初始化链路探针（改写器 OBS_TRACE 门）：只读寄存器并打印，便于定位“谁调用了谁”。
+// Init-chain probe (rewriter's OBS_TRACE gate): reads registers and prints them, to see who calls whom.
+static void trace_cb(const uint64_t *regs) {
+    LOG("trace: x0=%#llx x1=%#llx x2=%#llx x3=%#llx x4=%#llx x5=%#llx x6=%#llx x7=%#llx lr=%#llx",
+        (unsigned long long)regs[0], (unsigned long long)regs[1], (unsigned long long)regs[2],
+        (unsigned long long)regs[3], (unsigned long long)regs[4], (unsigned long long)regs[5],
+        (unsigned long long)regs[6], (unsigned long long)regs[7], (unsigned long long)regs[30]);
+}
+
 struct dm_flags g_flag;
 uint64_t g_t0_ns;
 
@@ -87,6 +96,7 @@ static void guest_main(void) {
             }
     }
     LOG(">>> nnMain");
+    if (getenv("DM_TRACE")) gate_obs_set(OBS_TRACE, trace_cb);
     ((fn0)req("nnMain"))();
     LOG("nnMain returned");
 }
