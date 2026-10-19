@@ -99,6 +99,15 @@ void dm_guest_write_prep_register(void (*fn)(void *addr, size_t len));
 void dm_res_report_register(void (*fn)(uint32_t tick, const char *why));   // 资源计数回调（图形层注册）：每 250 拍、读取画面已撤、记满退出时调 | Resource count callback (registered by the graphics layer): called every 250 ticks, when the loading screen has been dismissed, and on exit when the record is full
 void (*dm_res_report_cb(void))(uint32_t tick, const char *why);   // 取已注册的资源计数回调（未注册为空） | Get the registered resource count callback (null if not registered)
 void dm_guest_write_prepare(void *addr, size_t len);
+
+// ---- ACNH 宿主补充接口（D2R 里这些声明在 dm_*.h，最小集由 acnh_stub.c 提供）----
+// ---- ACNH host extras (D2R declares these in dm_*.h; the minimal set provides them in acnh_stub.c) ----
+uint64_t dm_game_res(int docked);                  // front_game_res 打包：(u64)高 << 32 | 宽
+const char *dm_ui(const char *key);                // i18n 占位，返回 key
+uint64_t svc_host_call(int num, uint64_t *regs);   // 0x80 起宿主调用分派（ACNH 未登记，恒 0）
+extern uint32_t (*dm_thread_tick_fn)(void);        // 当前游戏拍（未登记为空）
+int dm_sys_lang(void);
+int dm_custom_lang_explicit(void);
 // 图形生命周期（hle_nvn.c）：on=1 挂起（之后提交 / 出图阻塞，返回前 GPU 在途工作清空），on=0 恢复；iOS 前端在进出后台时调用
 // Graphics lifecycle (hle_nvn.c): on=1 suspends (afterwards submit / present block, and in-flight GPU work is drained before returning), on=0 resumes; called by the iOS front end when entering and leaving the background
 void dm_gfx_suspend(int on);
