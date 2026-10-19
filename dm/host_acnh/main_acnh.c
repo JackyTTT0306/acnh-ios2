@@ -34,12 +34,24 @@ typedef void (*fn2)(uint64_t, uint64_t);
 typedef void (*fnp)(void *);
 
 // 初始化链路探针（改写器 OBS_TRACE 门）：只读寄存器并打印，便于定位“谁调用了谁”。
+// 注意：regs[30] 是门块返回点（补丁区地址），不是 guest 的 lr；guest 的调用者要从 x29 帧链回溯
+// （fn_B 的 prologue 还没执行，所以 regs[29] 就是调用者的帧指针，[fp+8] 是调用者的返回地址）。
 // Init-chain probe (rewriter's OBS_TRACE gate): reads registers and prints them, to see who calls whom.
+// Note: regs[30] is the gate block's return point (a patch-area address), not the guest's lr; the guest
+// caller comes from the x29 frame chain (fn_B's prologue has not run yet, so regs[29] is the caller's
+// frame pointer and [fp+8] is the caller's return address).
 static void trace_cb(const uint64_t *regs) {
-    LOG("trace: x0=%#llx x1=%#llx x2=%#llx x3=%#llx x4=%#llx x5=%#llx x6=%#llx x7=%#llx lr=%#llx",
+    LOG("trace: x0=%#llx x1=%#llx x2=%#llx x3=%#llx x4=%#llx x5=%#llx x6=%#llx x7=%#llx x29=%#llx",
         (unsigned long long)regs[0], (unsigned long long)regs[1], (unsigned long long)regs[2],
         (unsigned long long)regs[3], (unsigned long long)regs[4], (unsigned long long)regs[5],
-        (unsigned long long)regs[6], (unsigned long long)regs[7], (unsigned long long)regs[30]);
+        (unsigned long long)regs[6], (unsigned long long)regs[7], (unsigned long long)regs[29]);
+    uint64_t fp = regs[29];
+    for (int i = 0; i < 5 && fp && !(fp & 7); i++) {
+        uint64_t nfp = ((uint64_t *)fp)[0], ra = ((uint64_t *)fp)[1];
+        LOG("  caller[%d]: %#llx", i, (unsigned long long)ra);
+        if (nfp <= fp) break;
+        fp = nfp;
+    }
 }
 
 struct dm_flags g_flag;
