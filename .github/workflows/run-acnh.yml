@@ -34,7 +34,7 @@ jobs:
       - name: Run headless host
         run: |
           set +e
-          ./dm/host_acnh/dmhost_acnh rewrite main sdk subsdk0 > run.log 2>&1
+          DM_FSLOG=$PWD/fs.log ./dm/host_acnh/dmhost_acnh rewrite main sdk subsdk0 > run.log 2>&1
           code=$?
           echo "exit=$code"
           echo "=== first 80 lines ==="
@@ -45,5 +45,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: run-log
-          path: run.log
+          path: |
+            run.log
+            fs.log
           if-no-files-found: warn
