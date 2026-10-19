@@ -28,13 +28,16 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release download "${{ inputs.data_tag }}" --pattern 'rewrite.zip' --dir .
+          gh release download "${{ inputs.data_tag }}" --pattern 'romfs_start.zip' --dir .
           unzip -q rewrite.zip
-          ls -la rewrite | head -20
+          unzip -q romfs_start.zip
+          ls -la rewrite | head -5
+          ls -la romfs | head -10
 
       - name: Run headless host
         run: |
           set +e
-          DM_FS=1 DM_SVC=1 DM_FSLOG=$PWD/fs.log ./dm/host_acnh/dmhost_acnh rewrite main sdk subsdk0 > run.log 2>&1
+          DM_FS=1 DM_SVC=1 DM_ROMFS=$PWD/romfs DM_FSLOG=$PWD/fs.log ./dm/host_acnh/dmhost_acnh rewrite main sdk subsdk0 > run.log 2>&1
           code=$?
           echo "exit=$code"
           echo "=== first 80 lines ==="
