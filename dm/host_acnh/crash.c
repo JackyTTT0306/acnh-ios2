@@ -142,6 +142,16 @@ static void on_crash(int sig, siginfo_t *si, void *uc_) {
     for (int i = 0; i < 29; i++) fprintf(stderr, "x%d=%#llx%s", i, uc->uc_mcontext->__ss.__x[i], i % 6 == 5 ? "\n" : " ");
     fprintf(stderr, "\n");
     dm_backtrace(uc->uc_mcontext->__ss.__fp);
+    {   // ACNH 诊断：x21 指向全局单例（main+0x32e7ad8），把首几个字段打出来。
+        // ACNH diagnostic: x21 points at the global singleton (main+0x32e7ad8); print its first fields.
+        uint64_t s = uc->uc_mcontext->__ss.__x[21];
+        if (s) {
+            uint64_t *p = (uint64_t *)s;
+            fprintf(stderr, "[dm] diag: singleton=%#llx [0]=%#llx [8]=%#llx [10]=%#llx [18]=%#llx [20]=%#llx\n",
+                    (unsigned long long)s, (unsigned long long)p[0], (unsigned long long)p[1],
+                    (unsigned long long)p[2], (unsigned long long)p[3], (unsigned long long)p[4]);
+        }
+    }
     if (g_dump_hook) g_dump_hook();
     _exit(128 + sig);
 }
