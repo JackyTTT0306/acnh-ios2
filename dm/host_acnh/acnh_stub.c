@@ -58,3 +58,8 @@ void *objmap_del(const void *guest) {
     }
     return 0;
 }
+
+// hle_fs.c 的 D2R 语言钩子：ACNH 用 nn::oe 的语言接口，这里给固定值。
+// D2R language hooks used by hle_fs.c: ACNH goes through nn::oe, so return fixed values.
+int dm_sys_lang(void) { return 0; }            // 0 = 日语（D2R 的 Settings.json 用；对 ACNH 无影响）
+int dm_custom_lang_explicit(void) { return -1; } // -1 = 未设置，hle_fs 跳过语言改写
