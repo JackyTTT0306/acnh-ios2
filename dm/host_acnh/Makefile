@@ -23,6 +23,7 @@ HOSTSRC = \
 	hle_sdkinit.c \
 	hle_audio.c \
 	hle_account.c \
+	hle_account_acnh.c \
 	hle_fs.c \
 	hle_net_acnh.c \
 	hle_oe_acnh.c \
