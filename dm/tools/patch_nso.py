@@ -166,9 +166,9 @@ OBS = {'db0507f36b84200ac05f75d76ed5026f': [
  '7fc1baff976aeca414520cb89f4616cb': [
     (0x19777a0, 23, 'f81e0ff3', 'ACNH 初始化链路：单例虚调用链 fn_B 入口，OBS_TRACE 打印 x0–x7/x29 链定位调用者；原指令 str x19, [sp, #-0x20]!'),
     (0x197bb20, 23, 'a9be4ff4', 'ACNH 初始化链路：main+0x1979398 调用的对象创建函数入口（看返回 x0 与入参）；原指令 stp x20, x19, [sp, #-0x20]!'),
-    (0x1c704a0, 23, 'f9413c15', 'ACNH 初始化链路：nnMain 里取 [x0+0x278] 的管理器字段（看 x0 是谁、字段指向谁）；原指令 ldr x21, [x0, #0x278]'),
+    (0x1c71618, 23, 'f9400101', 'ACNH 初始化链路：nnMain 崩溃前的虚调用点（打印 x19/x21 的 vtable 指针）；原指令 ldr x1, [x8]'),
 ]}
-ACNH_OBS_EXTRA = {0x1c704a0}
+ACNH_OBS_EXTRA = {0x1c71618}
 BUILD_ID = d[0x40:0x50].hex()
 # 构建期产品规则：旧原资源/对拍域默认不变；触屏版单独出新版本，不在运行时写客体代码。
 # Build-time product rules: the old original-resource / comparison domain is unchanged by default; the touchscreen version is issued separately as a new version, and guest code is not written at runtime.

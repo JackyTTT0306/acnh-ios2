@@ -41,10 +41,10 @@ typedef void (*fnp)(void *);
 // caller comes from the x29 frame chain (fn_B's prologue has not run yet, so regs[29] is the caller's
 // frame pointer and [fp+8] is the caller's return address).
 static void trace_cb(const uint64_t *regs) {
-    LOG("trace: x0=%#llx x1=%#llx x2=%#llx x3=%#llx x4=%#llx x5=%#llx x6=%#llx x7=%#llx x29=%#llx",
+    LOG("trace: x0=%#llx x1=%#llx x2=%#llx x3=%#llx x4=%#llx x5=%#llx x6=%#llx x7=%#llx x19=%#llx x21=%#llx x29=%#llx",
         (unsigned long long)regs[0], (unsigned long long)regs[1], (unsigned long long)regs[2],
         (unsigned long long)regs[3], (unsigned long long)regs[4], (unsigned long long)regs[5],
-        (unsigned long long)regs[6], (unsigned long long)regs[7], (unsigned long long)regs[29]);
+        (unsigned long long)regs[6], (unsigned long long)regs[7], (unsigned long long)regs[19], (unsigned long long)regs[21], (unsigned long long)regs[29]);
     uint64_t fp = regs[29];
     for (int i = 0; i < 5 && fp && !(fp & 7); i++) {
         uint64_t nfp = ((uint64_t *)fp)[0], ra = ((uint64_t *)fp)[1];
