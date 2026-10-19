@@ -24,6 +24,7 @@ HOSTSRC = \
 	hle_audio.c \
 	hle_account.c \
 	hle_fs.c \
+	hle_net_acnh.c \
 	hle_time.c \
 	hle_guestthread.c \
 	crash.c \
