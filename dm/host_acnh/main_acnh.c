@@ -58,8 +58,13 @@ static void guest_main(void) {
         // Diagnostic: the global singleton slot (ACNH's GameSystem and the like). An early virtual call in
         // nnMain reads it; when it is null the guest crashes at main+0x19a6250.
         for (int i = 0; i < g_nmod; i++)
-            if (!strcmp(g_mod[i].name, "main"))
-                LOG("diag: main+0x32e7ad8 -> %p（进 nnMain 前）", *(void **)(g_mod[i].base + 0x32e7ad8));
+            if (!strcmp(g_mod[i].name, "main")) {
+                void *inst = *(void **)(g_mod[i].base + 0x32e7ad8);
+                uint64_t *p = (uint64_t *)inst;
+                LOG("diag: main+0x32e7ad8 -> %p [0]=%#llx [8]=%#llx [10]=%#llx [18]=%#llx（进 nnMain 前）",
+                    inst, p ? (unsigned long long)p[0] : 0, p ? (unsigned long long)p[1] : 0,
+                    p ? (unsigned long long)p[2] : 0, p ? (unsigned long long)p[3] : 0);
+            }
     }
     LOG(">>> nnMain");
     ((fn0)req("nnMain"))();
