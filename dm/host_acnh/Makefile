@@ -4,7 +4,7 @@
 # Target platform: macOS 26 (Metal 4).
 MACOS_MIN ?= 26.0
 CC ?= clang
-CFLAGS = -O1 -g -Wall -Wno-unused-function -mmacosx-version-min=$(MACOS_MIN) -I. -Igfx/nvn -Igfx/tex
+CFLAGS = -O1 -g -Wall -Wno-unused-function -mmacosx-version-min=$(MACOS_MIN) -I. -Igfx/nvn -Igfx/nvn/include -Igfx/tex
 LDFLAGS = -lpthread \
 	-framework AudioToolbox -framework CoreAudio -framework CoreFoundation \
 	-framework Metal -framework QuartzCore -framework Foundation -framework CoreGraphics
