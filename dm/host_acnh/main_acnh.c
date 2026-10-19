@@ -2,6 +2,7 @@
 // 与 D2R 的 main.c 的区别：去掉存档节流、固定种子、触屏布局、TACT 预取、脚本按键等本游戏专用逻辑。
 // ACNH minimal host bootstrap (headless): load main/sdk/subsdk0, initialize the SDK runtime in nn::init::Start order, then enter nnMain.
 // Differences from D2R's main.c: no save throttling, fixed seed, touch layout, TACT prefetch or scripted keys.
+#define _XOPEN_SOURCE 700   // macOS 的 ucontext（crash.c 的信号恢复用）需要它
 #include "dm.h"
 #include "front.h"
 #include <stdatomic.h>
