@@ -7,7 +7,7 @@
 // (measured: the game writes streamed assets into texture storage that is still being sampled, without re-registering).
 // Signal handler constraint: the page-fault path uses only atomic operations and mprotect, no allocation, no locks.
 #include "nvn_dirty.h"
-#include "../../host/dm.h"
+#include "../../dm.h"
 #include <stdatomic.h>
 #include <pthread.h>
 #include <sys/mman.h>

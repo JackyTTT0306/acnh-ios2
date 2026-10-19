@@ -18,13 +18,13 @@
 // sync object = submit fence value, and waits are released only after the GPU completes.
 // Every implementation gets a compile-time signature check against the prototypes in nvn_protos.h (NVNboolean parameters are received as uint32_t, only the low 8 bits are looked at).
 // Environment switches: DM_NVN_FRAMES=N prints the call table per frame for the first N frames (default 3); DM_NVN_TSV=path writes the per-frame call table and timing to a TSV (DM_NVN_TSV_CALLS=0 writes timing only); DM_SLOWFRAME=1 writes only the per-frame breakdown of dropped frames to the log; DM_NVN_LOG=1 logs object creation.
-#include "../../host/hle.h"
+#include "../../hle.h"
 #include "nvn_protos.h"
 #include "nvn_count.h"
 #include "nvn_tex.h"
 #include "nvn_mtl.h"
 #include "nvn_pace.h"
-#include "../../host/front.h"
+#include "../../front.h"
 #include "nvn_dirty.h"
 #include <mach/mach_time.h>
 #include <mach/mach.h>
