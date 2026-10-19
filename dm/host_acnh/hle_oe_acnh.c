@@ -5,7 +5,8 @@
 #include <string.h>
 
 // ---- nn::oe ----
-HLE_FORCE("_ZN2nn2oe10InitializeEv", "oe 初始化；宿主无 oe 服务", void, h_oe_Init, void) {}
+// oe::Initialize 已在 hle_sdkinit.c 注册（d2r 原有），这里不重复。
+// oe::Initialize is already registered in hle_sdkinit.c (from d2r); do not duplicate it here.
 HLE_FORCE("_ZN2nn2oe18GetDesiredLanguageEv", "期望语言；固定 en-US(1)", int, h_oe_Lang, void) { return 1; }
 HLE_FORCE("_ZN2nn2oe13GetRegionCodeEv", "区域；固定 US(1)", int, h_oe_Region, void) { return 1; }
 HLE_FORCE("_ZN2nn2oe16GetOperationModeEv", "运行模式；0 掌机", int, h_oe_OpMode, void) { return 0; }
