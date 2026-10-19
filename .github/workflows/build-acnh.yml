@@ -1,0 +1,33 @@
+name: acnh-host
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, acnh ]
+
+jobs:
+  build:
+    # macOS 26 runner：Xcode 26 自带 Metal 4 与 iOS 26 SDK
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Toolchain
+        run: |
+          xcodebuild -version
+          sw_vers
+          clang --version
+
+      - name: Build minimal host (headless)
+        run: make -C dm/host_acnh -j$(sysctl -n hw.ncpu)
+
+      - name: Smoke run (no game files expected to fail cleanly)
+        run: |
+          set +e
+          ./dm/host_acnh/dmhost_acnh 2>&1 | head -50
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dmhost-acnh
+          path: dm/host_acnh/dmhost_acnh
+          if-no-files-found: error
