@@ -5,7 +5,7 @@
 MACOS_MIN ?= 26.0
 CC ?= clang
 CFLAGS = -O1 -g -Wall -Wno-unused-function -mmacosx-version-min=$(MACOS_MIN) -I.
-LDFLAGS = -lpthread
+LDFLAGS = -lpthread -framework AudioToolbox -framework CoreAudio -framework CoreFoundation
 
 SRC = \
 	main_acnh.c \
