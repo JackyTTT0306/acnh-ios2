@@ -43,8 +43,3 @@ void *hlecount_wrap(const char *kind, const char *name, void *fn) { (void)kind; 
 void hlecount_seal(void) {}
 void hlecount_svc(int num) { (void)num; }
 void uimsg_subscribe(void (*fn)(const char *, const char *, const char *)) { (void)fn; }
-
-// 音频生命周期（前端在切后台 / 回前台时调）：ACNH 最小集还没有音频前端，空实现。
-// Audio lifecycle (called by the front end on background/foreground): no audio front end yet.
-void dm_audio_suspend(int on) { (void)on; }
-uint64_t dm_audio_render_calls(void) { return 0; }
