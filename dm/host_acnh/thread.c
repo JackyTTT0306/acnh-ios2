@@ -8,7 +8,6 @@
 #define THREAD_OBJ_SIZE 0x400
 extern void dm_gate(void);            // entry.S：门公共入口 | entry.S: common gate entry
 #include "front.h"
-#include "dm_uiscreen.h"
 static pthread_key_t g_keyown;   // 本线程申请到的 TLS 块 / 线程本地区的原始指针（见函数末尾） | raw pointers of the TLS block / thread-local region allocated by this thread (see the end of the function)
 static pthread_once_t g_keyown_once = PTHREAD_ONCE_INIT;
 static void own_free(void *p) { void **own = p; free(own[0]); free(own[1]); free(own); }

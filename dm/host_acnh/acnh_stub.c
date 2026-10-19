@@ -19,7 +19,7 @@ uint32_t (*dm_thread_tick_fn)(void) = 0;
 // 资源计数回调：图形层注册；ACNH 最小集无图形层，恒空。
 // Resource-count callback: registered by the graphics layer; the ACNH minimal set has none, so always null.
 static void (*g_res_cb)(uint32_t, const char *);
-void (*dm_res_report_cb(void))(uint32_t, const char *why) { (void)why; return g_res_cb; }
+void (*dm_res_report_cb(void))(uint32_t, const char *) { return g_res_cb; }
 void dm_res_report_register(void (*fn)(uint32_t, const char *)) { g_res_cb = fn; }
 
 // 分辨率参数位：按 front.h 的约定返回 (u64)高 << 32 | 宽。
