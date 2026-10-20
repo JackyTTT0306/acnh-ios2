@@ -10,6 +10,7 @@
 #include <sys/mman.h>
 #include <ucontext.h>
 #include <errno.h>
+#include <mach/mach.h>
 
 void guest_thread_init(void);
 uint32_t svc_thread_main_init(void);
