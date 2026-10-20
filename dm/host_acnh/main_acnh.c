@@ -64,6 +64,22 @@ static uint64_t fake_cb(void *self) {
     n++;
     return 0;
 }
+// 实验：把游戏里若干“全局函数指针表”指向宿主桩表，避免空表项导致的崩溃
+// Experiment: point some guest global function-pointer tables at a host stub table
+static uint64_t g_stubtbl[64];
+static void install_global_stubs(void) {
+    extern module_t g_mod[]; extern int g_nmod;
+    for (int i = 0; i < 64; i++) g_stubtbl[i] = (uint64_t)fake_cb;
+    uintptr_t base = 0;
+    for (int i = 0; i < g_nmod; i++) if (!strcmp(g_mod[i].name, "main")) base = (uintptr_t)g_mod[i].base;
+    if (!base) return;
+    static const uintptr_t offs[] = { 0x33186e8, 0x33186f0, 0x3318728, 0x3318900, 0x3318908, 0x3318910 };
+    for (unsigned k = 0; k < sizeof(offs) / sizeof(offs[0]); k++) {
+        uint64_t *p = (uint64_t *)(base + offs[k]);
+        LOG("stubtbl: [%#lx] was %#llx -> host table", (unsigned long)offs[k], (unsigned long long)*p);
+        *p = (uint64_t)g_stubtbl;
+    }
+}
 static void install_fake_singleton(void) {
     extern module_t g_mod[]; extern int g_nmod;
     for (int i = 0; i < g_nmod; i++)
@@ -232,6 +248,7 @@ static void guest_main(void) {
             }
     }
     if (getenv("DM_FAKE")) install_fake_singleton();
+    if (getenv("DM_STUBTBL")) install_global_stubs();
     if (getenv("DM_FLAG")) { pthread_t th; pthread_create(&th, NULL, flag_thread, NULL); }
     LOG(">>> nnMain");
     if (getenv("DM_TRACE")) gate_obs_set(OBS_TRACE, trace_cb);
