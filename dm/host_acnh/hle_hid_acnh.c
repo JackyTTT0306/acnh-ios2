@@ -34,3 +34,7 @@ HLE_FORCE("_ZN2nn3hid16GetKeyboardStateEPNS0_13KeyboardStateE", "键盘状态；
 // ---- 震动 / 六轴（空实现）----
 HLE_FORCE("_ZN2nn3hid18SendVibrationValueERKNS0_21VibrationDeviceHandleERKNS0_14VibrationValueE", "发送震动；空操作", void, h_hid_Vib, const void *h, const void *v) { (void)h; (void)v; }
 HLE_FORCE("_ZN2nn3hid18StartSixAxisSensorERKNS0_19SixAxisSensorHandleE", "启动六轴；空操作", void, h_hid_StartSix, const void *h) { (void)h; }
+
+// 调试手柄状态：全 0（没有设备）；否则 SDK 会以 ResultNotSupported 断言
+// Debug pad state: all zero (no device); otherwise the SDK asserts with ResultNotSupported
+HLE_FORCE("_ZN2nn3hid16GetDebugPadStateEPNS0_13DebugPadStateE", "调试手柄状态；全 0", void, h_hid_GetDebugPad, void *st) { if (st) memset(st, 0, 0x40); }
