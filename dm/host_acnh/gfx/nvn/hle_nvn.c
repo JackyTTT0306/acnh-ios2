@@ -186,6 +186,24 @@ NVN(nvnMemoryPoolFinalize, void, NVNmemoryPool *p) { if (((pool_t *)p)->mem) { n
 NVN(nvnMemoryPoolFlushMappedRange, void, const NVNmemoryPool *p, ptrdiff_t off, size_t n) { (void)p; (void)off; (void)n; }
 NVN(nvnMemoryPoolGetBufferAddress, NVNbufferAddress, const NVNmemoryPool *p) { return (NVNbufferAddress)((const pool_t *)p)->mem; }
 
+// ---------- NVNbuffer：ACNH 用 builder 建缓冲区，再取设备地址 ----------
+// ---------- NVNbuffer: ACNH builds buffers through the builder, then asks for the device address ----------
+NVN(nvnBufferBuilderSetDefaults, void, NVNbufferBuilder *b) { memset(b, 0, sizeof(buf_builder_t)); }
+NVN(nvnBufferBuilderSetDevice, void, NVNbufferBuilder *b, NVNdevice *d) { ((buf_builder_t *)b)->dev = d; }
+NVN(nvnBufferBuilderSetStorage, void, NVNbufferBuilder *b, NVNmemoryPool *p, ptrdiff_t off, size_t sz) {
+    buf_builder_t *s = (buf_builder_t *)b; s->pool = (pool_t *)p; s->off = off; s->size = sz;
+}
+NVN(nvnBufferInitialize, NVNboolean, NVNbuffer *o, const NVNbufferBuilder *b) {
+    const buf_builder_t *s = (const buf_builder_t *)b;
+    *(buf_t *)o = (buf_t){ MAGIC('B', 'U', 'F', 'R'), s->pool && s->pool->mem ? s->pool->mem + s->off : NULL, s->size, s->pool };
+    OLOG("Buffer size=%llu", (unsigned long long)s->size);
+    return 1;
+}
+NVN(nvnBufferFinalize, void, NVNbuffer *o) { if (o) ((buf_t *)o)->magic = 0; }
+NVN(nvnBufferGetAddress, NVNbufferAddress, const NVNbuffer *o) { static int n; if (!o) { if (n++ < 3) LOG("nvn: BufferGetAddress(NULL)"); return 0; } return (NVNbufferAddress)((const buf_t *)o)->mem; }
+NVN(nvnBufferMap, void *, const NVNbuffer *o) { return o ? ((const buf_t *)o)->mem : NULL; }
+NVN(nvnBufferGetMemoryPool, NVNmemoryPool *, const NVNbuffer *o) { return o ? (NVNmemoryPool *)((const buf_t *)o)->pool : NULL; }
+
 // ---------- 描述符池 ----------
 // ---------- Descriptor pools ----------
 NVN(nvnTexturePoolInitialize, NVNboolean, NVNtexturePool *tp, const NVNmemoryPool *p, ptrdiff_t off, int n) {
