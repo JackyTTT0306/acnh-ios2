@@ -152,6 +152,32 @@ static int trap_probe(ucontext_t *uc) {
     if (n < 4) LOG("trap: pc=%#llx off=%#llx x0=%#llx x1=%#llx x2=%#llx", (unsigned long long)pc, (unsigned long long)off,
                    (unsigned long long)x0, (unsigned long long)uc->uc_mcontext->__ss.__x[1], (unsigned long long)uc->uc_mcontext->__ss.__x[2]);
     n++;
+    if (off == 0x197ce70) {   // dump this 的虚表槽与字段 | dump the vtable slots and fields of this
+        uint64_t x19 = uc->uc_mcontext->__ss.__x[19];
+        uint64_t vt = 0; vm_size_t g = 0;
+        if (!vm_read_overwrite(mach_task_self(), (vm_address_t)x19, 8, (vm_address_t)&vt, &g) || !vt) {
+            LOG("dump: no vtable, this=%#llx", (unsigned long long)x19);
+            for (int o = 0; o < 0x60; o += 8) {
+                uint64_t v = 0;
+                if (vm_read_overwrite(mach_task_self(), (vm_address_t)(x19 + o), 8, (vm_address_t)&v, &g) == KERN_SUCCESS)
+                    LOG("  this+%#x = %#llx", o, (unsigned long long)v);
+            }
+        }
+        else {
+            LOG("dump: this=%#llx vt=%#llx (vt-main=%#llx)", (unsigned long long)x19, (unsigned long long)vt,
+                (unsigned long long)(base ? vt - base : 0));
+            for (int s = 0x58; s <= 0x80; s += 8) {
+                uint64_t fn = 0;
+                if (vm_read_overwrite(mach_task_self(), (vm_address_t)(vt + s), 8, (vm_address_t)&fn, &g) == KERN_SUCCESS)
+                    LOG("  slot %#x = %#llx (main+%#llx)", s, (unsigned long long)fn, (unsigned long long)(base && fn > base ? fn - base : 0));
+            }
+            for (int o = 0x30; o <= 0x60; o += 8) {
+                uint64_t v = 0;
+                if (vm_read_overwrite(mach_task_self(), (vm_address_t)(x19 + o), 8, (vm_address_t)&v, &g) == KERN_SUCCESS)
+                    LOG("  this+%#x = %#llx", o, (unsigned long long)v);
+            }
+        }
+    }
     if (off == 0x197ce70) {   // 打印对象与 this 的 RTTI | print RTTI of the object and this
         uint64_t x19 = uc->uc_mcontext->__ss.__x[19];
         uint64_t cand[2] = { x0, x19 };
