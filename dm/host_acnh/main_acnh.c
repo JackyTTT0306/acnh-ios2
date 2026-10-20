@@ -43,6 +43,20 @@ typedef void (*fnp)(void *);
 // frame pointer and [fp+8] is the caller's return address).
 // 实验：单例 +0 字段为空导致 main+0x19a6250 崩溃；塞一个假对象（+0x20 指向宿主回调）看能否越过
 // Experiment: the singleton +0 field is null; install a fake object (with a host callback at +0x20)
+static volatile uint64_t g_obj;   // 循环等待的对象（[this+0x38]），从探针里捕获
+static void *flag_thread(void *arg) {
+    (void)arg;
+    for (int i = 0; i < 100; i++) {
+        usleep(100000);
+        if (g_obj) {
+            *(volatile uint64_t *)(uintptr_t)(g_obj + 0x120) = 1;
+            LOG("flag: set [%p+0x120] = 1", (void *)(uintptr_t)g_obj);
+            return NULL;
+        }
+    }
+    LOG("flag: object never captured");
+    return NULL;
+}
 static uint64_t fake_cb(void *self) {
     static int n;
     uint64_t lr; __asm__ volatile("mov %0, x30" : "=r"(lr));
@@ -87,6 +101,11 @@ static void trace_cb(const uint64_t *regs) {
             if (v && vm_read_overwrite(mach_task_self(), (vm_address_t)v, 8, (vm_address_t)&w, &got) == KERN_SUCCESS && got == 8)
                 LOG("  [x21]+0 = %#llx", (unsigned long long)w);
         }
+    }
+    if (regs[19]) {   // 捕获循环等待的对象：obj = [this + 0x38]
+        uint64_t o = 0; vm_size_t g2 = 0;
+        if (vm_read_overwrite(mach_task_self(), (vm_address_t)(regs[19] + 0x38), 8, (vm_address_t)&o, &g2) == KERN_SUCCESS && o)
+            g_obj = o;
     }
     uint64_t fp = regs[29];
     for (int i = 0; i < 5 && fp && !(fp & 7); i++) {
@@ -151,6 +170,7 @@ static void guest_main(void) {
             }
     }
     if (getenv("DM_FAKE")) install_fake_singleton();
+    if (getenv("DM_FLAG")) { pthread_t th; pthread_create(&th, NULL, flag_thread, NULL); }
     LOG(">>> nnMain");
     if (getenv("DM_TRACE")) gate_obs_set(OBS_TRACE, trace_cb);
     ((fn0)req("nnMain"))();
