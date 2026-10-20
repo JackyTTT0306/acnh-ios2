@@ -138,6 +138,42 @@ static void flags_init(void) {
     g_flag.bootprof = !!getenv("DM_BOOTPROF");
 }
 
+// 临时探针：把客体的轮询函数入口改成 brk #0，宿主在这里打印 x0，并可在若干次后注入状态
+// Temporary probe: the guest poll entry is patched to brk #0; the host logs x0 and can inject state after N hits
+void crash_set_trap_hook(int (*fn)(ucontext_t *uc));
+static int trap_probe(ucontext_t *uc) {
+    static int n;
+    extern module_t g_mod[]; extern int g_nmod;
+    uint64_t pc = uc->uc_mcontext->__ss.__pc;
+    uint64_t x0 = uc->uc_mcontext->__ss.__x[0];
+    uintptr_t base = 0;
+    for (int i = 0; i < g_nmod; i++) if (!strcmp(g_mod[i].name, "main")) base = (uintptr_t)g_mod[i].base;
+    uint64_t off = base ? pc - base : 0;
+    if (n < 4) LOG("trap: pc=%#llx off=%#llx x0=%#llx x1=%#llx x2=%#llx", (unsigned long long)pc, (unsigned long long)off,
+                   (unsigned long long)x0, (unsigned long long)uc->uc_mcontext->__ss.__x[1], (unsigned long long)uc->uc_mcontext->__ss.__x[2]);
+    n++;
+    if (off == 0x197ce70) {   // 打印对象与 this 的 RTTI | print RTTI of the object and this
+        uint64_t x19 = uc->uc_mcontext->__ss.__x[19];
+        uint64_t cand[2] = { x0, x19 };
+        for (int k = 0; k < 2; k++) {
+            uint64_t vt = 0, ti = 0, np = 0; vm_size_t g = 0; char nm[128]; memset(nm, 0, sizeof nm);
+            if (!cand[k] || vm_read_overwrite(mach_task_self(), (vm_address_t)cand[k], 8, (vm_address_t)&vt, &g) != KERN_SUCCESS || !vt) continue;
+            if (vm_read_overwrite(mach_task_self(), (vm_address_t)(vt - 8), 8, (vm_address_t)&ti, &g) != KERN_SUCCESS || !ti) continue;
+            if (vm_read_overwrite(mach_task_self(), (vm_address_t)(ti + 8), 8, (vm_address_t)&np, &g) != KERN_SUCCESS || !np) continue;
+            if (vm_read_overwrite(mach_task_self(), (vm_address_t)np, sizeof(nm) - 1, (vm_address_t)nm, &g) != KERN_SUCCESS) continue;
+            LOG("trap: %s=%#llx vt=%#llx ti=%#llx name=%s", k ? "this" : "obj", (unsigned long long)cand[k],
+                (unsigned long long)vt, (unsigned long long)ti, nm);
+        }
+    }
+    if (x0 && base && (off == 0x197ce70)) {
+        *(volatile uint64_t *)(uintptr_t)(x0 + 0x120) = 1;   // 把这个对象标记为已就绪 | mark the object ready
+        if (n <= 3) LOG("trap: set [%#llx+0x120] = 1", (unsigned long long)x0);
+        uc->uc_mcontext->__ss.__pc = base + 0x197c8c0;        // 直接跳到 poll 函数本体 | jump to the poll body
+        return 1;
+    }
+    uc->uc_mcontext->__ss.__pc = pc + 4;
+    return 1;
+}
 static void guest_main(void) {
     guest_thread_init();
     uint32_t hmain = svc_thread_main_init();   // 主线程句柄：nnosInitialize 的 x0
@@ -182,6 +218,7 @@ int main(int argc, char **argv) {
     flags_init();
     if (argc < 2) die("usage: dmhost_acnh <rewrite dir> [mod...] [-- game args...]");
     crash_install();
+    crash_set_trap_hook(trap_probe);
     const char *names[MAX_MOD];
     int n = 0;
     int i = 2;
