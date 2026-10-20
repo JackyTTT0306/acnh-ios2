@@ -41,6 +41,38 @@ typedef void (*fnp)(void *);
 // Note: regs[30] is the gate block's return point (a patch-area address), not the guest's lr; the guest
 // caller comes from the x29 frame chain (fn_B's prologue has not run yet, so regs[29] is the caller's
 // frame pointer and [fp+8] is the caller's return address).
+// 实验：单例 +0 字段为空导致 main+0x19a6250 崩溃；塞一个假对象（+0x20 指向宿主回调）看能否越过
+// Experiment: the singleton +0 field is null; install a fake object (with a host callback at +0x20)
+static uint64_t fake_cb(void *self) {
+    static int n;
+    uint64_t lr; __asm__ volatile("mov %0, x30" : "=r"(lr));
+    if (n < 6 || (n % 2000) == 0) LOG("fake_cb #%d lr=%#llx self=%p", n, (unsigned long long)lr, self);
+    n++;
+    return 0;
+}
+static void install_fake_singleton(void) {
+    extern module_t g_mod[]; extern int g_nmod;
+    for (int i = 0; i < g_nmod; i++)
+        if (!strcmp(g_mod[i].name, "main")) {
+            uint8_t *obj = (uint8_t *)((uintptr_t)g_mod[i].base + 0x3a73750);
+            uint8_t *fake = calloc(1, 0x200);
+            *(uint64_t *)(fake + 0x20) = (uint64_t)fake_cb;
+            *(uint64_t *)obj = (uint64_t)fake;
+            LOG("fake: singleton[0] = %p", fake);
+        }
+}
+// 用 RTTI 打印对象类型：obj -> vtable -> typeinfo -> name
+// Print the object's RTTI: obj -> vtable -> typeinfo -> name
+static void print_rtti(const char *tag, uint64_t p) {
+    if (!p || (p & 7)) return;
+    uint64_t vt = 0, ti = 0, np = 0; vm_size_t got = 0;
+    if (vm_read_overwrite(mach_task_self(), (vm_address_t)p, 8, (vm_address_t)&vt, &got) != KERN_SUCCESS || got != 8 || !vt) return;
+    if (vm_read_overwrite(mach_task_self(), (vm_address_t)(vt - 8), 8, (vm_address_t)&ti, &got) != KERN_SUCCESS || got != 8 || !ti) return;
+    if (vm_read_overwrite(mach_task_self(), (vm_address_t)(ti + 8), 8, (vm_address_t)&np, &got) != KERN_SUCCESS || got != 8 || !np) return;
+    char buf[160]; memset(buf, 0, sizeof buf);
+    if (vm_read_overwrite(mach_task_self(), (vm_address_t)np, sizeof(buf) - 1, (vm_address_t)buf, &got) == KERN_SUCCESS)
+        LOG("  %s rtti: vtable=%#llx typeinfo=%#llx name=%s", tag, (unsigned long long)vt, (unsigned long long)ti, buf);
+}
 static void trace_cb(const uint64_t *regs) {
     LOG("trace: x0=%#llx x1=%#llx x2=%#llx x3=%#llx x4=%#llx x5=%#llx x6=%#llx x7=%#llx x19=%#llx x21=%#llx x29=%#llx",
         (unsigned long long)regs[0], (unsigned long long)regs[1], (unsigned long long)regs[2],
@@ -118,6 +150,7 @@ static void guest_main(void) {
                 g_watch_hi = g_watch_lo + 8;
             }
     }
+    if (getenv("DM_FAKE")) install_fake_singleton();
     LOG(">>> nnMain");
     if (getenv("DM_TRACE")) gate_obs_set(OBS_TRACE, trace_cb);
     ((fn0)req("nnMain"))();

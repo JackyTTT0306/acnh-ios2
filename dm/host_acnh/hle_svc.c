@@ -220,7 +220,7 @@ uint64_t svc_dispatch(int num, uint64_t *regs, uint64_t orig_addr) {
         static int nb;
         LOG("Break#%d reason=%#llx Result=%#x svc 位于 %s+%#llx", ++nb, regs[0], res, mm ? mm->name : "?", orig_addr);
         dm_backtrace(regs[29]);
-        if (regs[0] & 0x80000000ull) return 0;   // 仅通知，可继续 | notification only, can continue
+        if ((regs[0] & 0x80000000ull) || getenv("DM_NOBREAK")) return 0;   // 仅通知或 DM_NOBREAK：继续 | notification only or DM_NOBREAK: continue
         _exit(42);
     }
     case 0x1E: regs[0] = 0; regs[1] = guest_ns() * 12 / 625; return 0;   // GetSystemTick
