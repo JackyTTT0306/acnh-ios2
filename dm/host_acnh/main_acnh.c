@@ -70,7 +70,7 @@ static void install_fake_singleton(void) {
         if (!strcmp(g_mod[i].name, "main")) {
             uint8_t *obj = (uint8_t *)((uintptr_t)g_mod[i].base + 0x3a73750);
             uint8_t *fake = calloc(1, 0x200);
-            *(uint64_t *)(fake + 0x20) = (uint64_t)fake_cb;
+            for (int k = 0; k < 0x100; k += 8) *(uint64_t *)(fake + k) = (uint64_t)fake_cb;   // 整表都指向宿主空实现 | whole table points at the host stub
             *(uint64_t *)obj = (uint64_t)fake;
             LOG("fake: singleton[0] = %p", fake);
         }
