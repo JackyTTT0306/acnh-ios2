@@ -46,6 +46,16 @@ static void trace_cb(const uint64_t *regs) {
         (unsigned long long)regs[0], (unsigned long long)regs[1], (unsigned long long)regs[2],
         (unsigned long long)regs[3], (unsigned long long)regs[4], (unsigned long long)regs[5],
         (unsigned long long)regs[6], (unsigned long long)regs[7], (unsigned long long)regs[19], (unsigned long long)regs[21], (unsigned long long)regs[29]);
+    // 安全读 [x21]（vm_read 失败不影响进程）：看单例 +0 字段与它指向的对象
+    // Safely read [x21] (vm_read failure does not affect the process): the singleton +0 field and what it points to
+    if (regs[21]) {
+        uint64_t v = 0, w = 0; vm_size_t got = 0;
+        if (vm_read_overwrite(mach_task_self(), (vm_address_t)regs[21], 8, (vm_address_t)&v, &got) == KERN_SUCCESS && got == 8) {
+            LOG("  [x21] = %#llx", (unsigned long long)v);
+            if (v && vm_read_overwrite(mach_task_self(), (vm_address_t)v, 8, (vm_address_t)&w, &got) == KERN_SUCCESS && got == 8)
+                LOG("  [x21]+0 = %#llx", (unsigned long long)w);
+        }
+    }
     uint64_t fp = regs[29];
     for (int i = 0; i < 5 && fp && !(fp & 7); i++) {
         uint64_t nfp = ((uint64_t *)fp)[0], ra = ((uint64_t *)fp)[1];
