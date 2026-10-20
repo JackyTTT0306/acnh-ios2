@@ -75,9 +75,12 @@ static void install_global_stubs(void) {
     if (!base) return;
     static const uintptr_t offs[] = { 0x33186e8, 0x33186f0, 0x3318728, 0x3318900, 0x3318908, 0x3318910 };
     for (unsigned k = 0; k < sizeof(offs) / sizeof(offs[0]); k++) {
-        uint64_t *p = (uint64_t *)(base + offs[k]);
-        LOG("stubtbl: [%#lx] was %#llx -> host table", (unsigned long)offs[k], (unsigned long long)*p);
-        *p = (uint64_t)g_stubtbl;
+        uint64_t **tp = (uint64_t **)(base + offs[k]);
+        uint64_t *tbl = *tp;
+        if (!tbl || (uintptr_t)tbl < 0x10000) { LOG("stubtbl: [%#lx] null table", (unsigned long)offs[k]); continue; }
+        int filled = 0;
+        for (int i = 0; i < 64; i++) if (!tbl[i]) { tbl[i] = (uint64_t)fake_cb; filled++; }   // 只填空槽 | fill null slots only
+        LOG("stubtbl: [%#lx] table=%p filled %d null slots", (unsigned long)offs[k], (void *)tbl, filled);
     }
 }
 static void install_fake_singleton(void) {
